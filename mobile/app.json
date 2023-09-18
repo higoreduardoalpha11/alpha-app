@@ -1,0 +1,25 @@
+{
+  "name": "mobile",
+  "slug": "alpha-app",
+  "displayName": "mobile",
+  "icon": "./src/assets/icon.png",
+  "userInterfaceStyle": "light",
+  "splash": {
+    "image": "./src/assets/splash.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#1F1B2D"
+  },
+  "assetBundlePatterns": [
+    "**/*"
+  ],
+  "ios": {
+    "supportsTablet": true
+  },
+  "android": {
+    "adaptiveIcon": {
+      "foregroundImage": "./src/assets/adaptive-icon.png",
+      "backgroundColor": "#1F1B2D"
+    },
+    "package": "com.bhigoreduardo.alphaapp"
+  }
+}

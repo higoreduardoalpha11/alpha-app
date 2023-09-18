@@ -1,0 +1,51 @@
+/* VARIABLES */
+@import url(./_vars.css);
+
+/* BASE */
+*,
+::before,
+::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  outline: none;
+}
+
+html,
+body {
+  font-family: var(--font-family);
+  font-size: 62.5%;
+  scroll-behavior: smooth;
+  background-color: var(--color-bg-primary);
+  scroll-padding-top: 100px;
+}
+
+ul,
+ol {
+  list-style-type: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+input[type='submit'],
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+select,
+textarea,
+input {
+  font-family: inherit;
+  border: none;
+  resize: none;
+}
+
+img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
