@@ -14,7 +14,7 @@ export function AppProvider({ children }) {
       name: 'Esterilizador Sala',
       options: {
         port: 1234,
-        host: '192.168.237.148',
+        host: '192.168.175.148',
         localAddress: '0.0.0.0',
         reuseAddress: true,
       },

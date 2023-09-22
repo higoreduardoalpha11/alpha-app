@@ -43,7 +43,7 @@ void setup() {
 }
 
 void loop() {
-  if(udp.listen(localUdpPort)) {
+  if (udp.listen(localUdpPort)) {
     udp.onPacket([](AsyncUDPPacket packet) {
       uint8_t* data = packet.data();
       int size = packet.length();
@@ -60,7 +60,7 @@ void loop() {
         int firstPipe = packetData.indexOf("|");
         int lastPipe = packetData.indexOf("|", firstPipe + 1);
         String message = packetData.substring(firstPipe + 1, lastPipe);
-        Serial.println(message);
+        // Serial.println(message);
         packetData.remove(firstPipe + 1, lastPipe);
 
         fields[count] = message;
@@ -70,31 +70,62 @@ void loop() {
       if (fields[0] == "command") {
         if (fields[3] == "fins") {
           if (finsPosition == 0) {
-            for (finsPosition = 0; finsPosition <= 180; finsPosition += 1) {
+            for (finsPosition = 0; finsPosition < 180; finsPosition += 1) {
               servo.write(finsPosition);
               delay(15);
             }
           } else {
-            for (finsPosition = 180; finsPosition >= 0; finsPosition -= 1) {
+            for (finsPosition = 180; finsPosition > 0; finsPosition -= 1) {
               servo.write(finsPosition);
               delay(15);
             }
           }
-          packet.printf(finsPosition == 180?"1":"0");
+
+          String response = "|";
+          response.concat(fields[3]);
+          response.concat("|");
+          response.concat(finsPosition == 180 ? "1" : "0");
+          response.concat("|");
+
+          char array[20];
+          response.toCharArray(array, response.length() + 1);
+          packet.printf(array);
         } else {
           digitalWrite(fields[1].toInt(), fields[2].toInt());
           bool curState = digitalRead(fields[1].toInt());
-          const char* parsedCurState = curState?"1":"0";
-          packet.printf(parsedCurState);
+          Serial.println(curState);
+          String response = "|";
+          response.concat(fields[3]);
+          response.concat("|");
+          response.concat(curState ? "1" : "0");
+          response.concat("|");
+
+          char array[20];
+          response.toCharArray(array, response.length() + 1);
+          packet.printf(array);
         }
-      } else if (fields[0] == "connect") {
-        packet.printf("connect");
       } else {
-        dhtRead();
-        mq135Read();
-        mq131Read();
+        float temperature = readTemperature();
+        float humidity = readHumidity();
+        float mq135CorrectedPPM = mq135Read();
+        // float mq131O3PPM = mq131Read();
+
+        String response = "";
+        response.concat(temperature);
+        response.concat("|");
+        response.concat(humidity);
+        response.concat("|");
+        response.concat(mq135CorrectedPPM);
+        // response.concat("|");
+        // response.concat(mq131O3PPM);
+
+        char array[20];
+        response.toCharArray(array, response.length() + 1);
+        packet.printf(array);
+
+        // sprintf(array, "%f", mq135CorrectedPPM);
       }
-      
+
       packetData = "";
     });
   }
@@ -105,7 +136,7 @@ void connectSetup() {
   WiFi.begin(ssid, pass);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("WiFi Failed");
-    while(1) {
+    while (1) {
       delay(1000);
     }
   }
@@ -119,27 +150,45 @@ void dhtSetup() {
   dht.temperature().getSensor(&sensor);
   Serial.println(F("------------------------------------"));
   Serial.println(F("Temperature Sensor"));
-  Serial.print  (F("Sensor Type: ")); Serial.println(sensor.name);
-  Serial.print  (F("Driver Ver:  ")); Serial.println(sensor.version);
-  Serial.print  (F("Unique ID:   ")); Serial.println(sensor.sensor_id);
-  Serial.print  (F("Max Value:   ")); Serial.print(sensor.max_value); Serial.println(F("°C"));
-  Serial.print  (F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("°C"));
-  Serial.print  (F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("°C"));
+  Serial.print(F("Sensor Type: "));
+  Serial.println(sensor.name);
+  Serial.print(F("Driver Ver:  "));
+  Serial.println(sensor.version);
+  Serial.print(F("Unique ID:   "));
+  Serial.println(sensor.sensor_id);
+  Serial.print(F("Max Value:   "));
+  Serial.print(sensor.max_value);
+  Serial.println(F("°C"));
+  Serial.print(F("Min Value:   "));
+  Serial.print(sensor.min_value);
+  Serial.println(F("°C"));
+  Serial.print(F("Resolution:  "));
+  Serial.print(sensor.resolution);
+  Serial.println(F("°C"));
   Serial.println(F("------------------------------------"));
 
   dht.humidity().getSensor(&sensor);
   Serial.println(F("Humidity Sensor"));
-  Serial.print  (F("Sensor Type: ")); Serial.println(sensor.name);
-  Serial.print  (F("Driver Ver:  ")); Serial.println(sensor.version);
-  Serial.print  (F("Unique ID:   ")); Serial.println(sensor.sensor_id);
-  Serial.print  (F("Max Value:   ")); Serial.print(sensor.max_value); Serial.println(F("%"));
-  Serial.print  (F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("%"));
-  Serial.print  (F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("%"));
+  Serial.print(F("Sensor Type: "));
+  Serial.println(sensor.name);
+  Serial.print(F("Driver Ver:  "));
+  Serial.println(sensor.version);
+  Serial.print(F("Unique ID:   "));
+  Serial.println(sensor.sensor_id);
+  Serial.print(F("Max Value:   "));
+  Serial.print(sensor.max_value);
+  Serial.println(F("%"));
+  Serial.print(F("Min Value:   "));
+  Serial.print(sensor.min_value);
+  Serial.println(F("%"));
+  Serial.print(F("Resolution:  "));
+  Serial.print(sensor.resolution);
+  Serial.println(F("%"));
   Serial.println(F("------------------------------------"));
 }
 
 void mq131Setup() {
-  MQ131.begin(PINMQ131DIG, PINMQ131ANALOG, LOW_CONCENTRATION, 1000000);  
+  MQ131.begin(PINMQ131DIG, PINMQ131ANALOG, LOW_CONCENTRATION, 1000000);
 
   Serial.println("Calibration parameters");
   Serial.print("R0 = ");
@@ -158,30 +207,37 @@ void pinSetup() {
   pinMode(PINHUMIDIFIER, OUTPUT);
 }
 
-void dhtRead() {
+float readTemperature() {
   sensors_event_t event;
   dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
+  float temperature = event.temperature;
+  if (isnan(temperature)) {
     Serial.println(F("Error reading temperature!"));
+    return 0.0;
   }
-  else {
-    Serial.print(F("Temperature: "));
-    Serial.print(event.temperature);
-    Serial.println(F("°C"));
-  }
-  
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println(F("Error reading humidity!"));
-  }
-  else {
-    Serial.print(F("Humidity: "));
-    Serial.print(event.relative_humidity);
-    Serial.println(F("%"));
-  }
+
+  Serial.print(F("Temperature: "));
+  Serial.print(temperature);
+  Serial.println(F("°C"));
+  return temperature;
 }
 
-void mq135Read() {
+float readHumidity() {
+  sensors_event_t event;
+  dht.humidity().getEvent(&event);
+  float humidity = event.relative_humidity;
+  if (isnan(humidity)) {
+    Serial.println(F("Error reading humidity!"));
+    return 0.0;
+  }
+
+  Serial.print(F("Humidity: "));
+  Serial.print(humidity);
+  Serial.println(F("%"));
+  return humidity;
+}
+
+float mq135Read() {
   sensors_event_t event;
   dht.temperature().getEvent(&event);
 
@@ -202,9 +258,11 @@ void mq135Read() {
   Serial.print("\t Corrected PPM: ");
   Serial.print(correctedPPM);
   Serial.println("ppm");
+
+  return correctedPPM;
 }
 
-void mq131Read() {
+float mq131Read() {
   Serial.println("Sampling...");
   MQ131.sample();
   Serial.print("Concentration O3 : ");
@@ -221,4 +279,5 @@ void mq131Read() {
   Serial.println(" ug/m3");
 
   delay(1000);
+  return MQ131.getO3(PPM);
 }

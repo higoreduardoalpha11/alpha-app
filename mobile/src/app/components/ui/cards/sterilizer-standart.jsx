@@ -18,8 +18,9 @@ const SterilizerStandart = ({ name, options, active, components, analytics }) =>
   socket.bind(options.port)
   socket.on('message', function (msg, info) {
     let buffer = msg.toString()
-    console.log(buffer)
-    const curFounded = { ...founded[0], components: { ...founded[0]?.components, [target]: buffer } }
+    const response = buffer.split("|")
+    console.log(response)
+    const curFounded = { ...founded[0], components: { ...founded[0]?.components, [response[1]]: response[2] } }
     setFounded([curFounded])
   })
   
