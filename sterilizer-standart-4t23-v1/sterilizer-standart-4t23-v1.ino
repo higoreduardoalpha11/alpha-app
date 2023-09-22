@@ -22,7 +22,7 @@
 #define PINMQ131DIG 32
 
 const char* ssid = "motorola one action_2604";
-const char* pass = "dudu308424";
+const char* pass = "senhasupersecreta";
 const int localUdpPort = 1234;
 int finsPosition = 0;
 
